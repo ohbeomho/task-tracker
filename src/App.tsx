@@ -63,6 +63,7 @@ function App() {
     [],
   )
   const addTask = useCallback(() => {
+    if (!text) return
     dispatch({ type: 'add', text })
     setText('')
   }, [text])
@@ -80,6 +81,12 @@ function App() {
     (e: React.FormEvent<HTMLInputElement>) => setText(e.currentTarget.value),
     [],
   )
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') addTask()
+    },
+    [addTask],
+  )
 
   return (
     <div className="container">
@@ -92,6 +99,7 @@ function App() {
           style={{ flex: 1 }}
           value={text}
           onInput={textChange}
+          onKeyDown={onKeyDown}
         />
         <Button onClick={addTask}>Add</Button>
       </div>
