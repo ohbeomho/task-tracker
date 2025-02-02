@@ -1,18 +1,17 @@
-import React, { useCallback, useReducer, useState } from 'react'
+import { useCallback, useReducer, useState } from 'react'
 import Button from './components/Button.styled'
 import Input from './components/Input.styled'
 import { TaskList, TaskListItem } from './components/List.styled.tsx'
 import Checkbox from './components/Checkbox.styled.tsx'
 
 type Task = {
-  id: string
   text: string
   done: boolean
 }
 
 type TaskAction = {
   type: 'add' | 'remove' | 'mark'
-  id?: string
+  task?: Task
   text?: string
   done?: boolean
 }
@@ -22,17 +21,14 @@ function tasksReducer(tasks: Task[], action: TaskAction) {
 
   switch (action.type) {
     case 'add':
-      updated = [
-        ...tasks,
-        { id: crypto.randomUUID(), text: action.text!, done: false },
-      ]
+      updated = [...tasks, { text: action.text!, done: false }]
       break
     case 'remove':
-      updated = tasks.filter((task) => task.id !== action.id!)
+      updated = tasks.filter((task) => task !== action.task!)
       break
     case 'mark':
       updated = tasks.map((task) =>
-        task.id === action.id! ? { ...task, done: action.done! } : task,
+        task === action.task! ? { ...task, done: action.done! } : task,
       )
   }
 
@@ -58,8 +54,7 @@ function App() {
   const [text, setText] = useState('')
 
   const removeTask = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) =>
-      dispatch({ type: 'remove', id: e.currentTarget.dataset.taskid }),
+    (task: Task) => dispatch({ type: 'remove', task }),
     [],
   )
   const addTask = useCallback(() => {
@@ -68,24 +63,13 @@ function App() {
     setText('')
   }, [text])
   const markTask = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) =>
+    (task: Task, done: boolean) =>
       dispatch({
         type: 'mark',
-        id: e.currentTarget.dataset.taskid,
-        done: e.currentTarget.checked,
+        task,
+        done,
       }),
     [],
-  )
-
-  const textChange = useCallback(
-    (e: React.FormEvent<HTMLInputElement>) => setText(e.currentTarget.value),
-    [],
-  )
-  const onKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') addTask()
-    },
-    [addTask],
   )
 
   return (
@@ -96,10 +80,9 @@ function App() {
       <div style={{ display: 'flex' }}>
         <Input
           placeholder="Enter your task here"
-          style={{ flex: 1 }}
           value={text}
-          onInput={textChange}
-          onKeyDown={onKeyDown}
+          onInput={(e) => setText(e.currentTarget.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addTask()}
         />
         <Button onClick={addTask}>Add</Button>
       </div>
@@ -112,14 +95,11 @@ function App() {
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   Done:
                   <Checkbox
-                    data-taskid={task.id}
-                    onChange={markTask}
+                    onChange={(e) => markTask(task, e.currentTarget.checked)}
                     checked={task.done}
                   />
                 </div>
-                <Button data-taskid={task.id} onClick={removeTask}>
-                  Remove
-                </Button>
+                <Button onClick={() => removeTask(task)}>Remove</Button>
               </div>
             </TaskListItem>
           ))
