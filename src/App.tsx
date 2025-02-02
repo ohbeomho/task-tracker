@@ -1,4 +1,8 @@
 import { useReducer } from 'react'
+import Button from './components/Button.styled'
+import Input from './components/Input.styled'
+import { TaskList, TaskListItem } from './components/List.styled.tsx'
+import Checkbox from './components/Checkbox.styled.tsx'
 
 type Task = {
   id: string
@@ -32,10 +36,43 @@ function tasksReducer(tasks: Task[], action: TaskAction) {
   return updated
 }
 
-function App() {
-  const [tasks, dispatch] = useReducer(tasksReducer, [])
+function getInitialTasks() {
+  return JSON.parse(localStorage.getItem('tasks') || '[]')
+}
 
-  return <></>
+function App() {
+  const [tasks, dispatch] = useReducer(tasksReducer, getInitialTasks())
+
+  return (
+    <>
+      <p>
+        <Input placeholder="Enter your task here" />
+        <Button>Add</Button>
+      </p>
+      <TaskList>
+        <TaskListItem>
+          <Checkbox id="test" />
+          <label htmlFor="test">Test task</label>
+          <Button>Remove</Button>
+        </TaskListItem>
+        <TaskListItem>
+          <Checkbox id="test" />
+          <label htmlFor="test">Test task</label>
+          <Button>Remove</Button>
+        </TaskListItem>
+        <TaskListItem $done>
+          <Checkbox id="test" />
+          <label htmlFor="test">Test task</label>
+          <Button>Remove</Button>
+        </TaskListItem>
+        <TaskListItem>
+          <Checkbox id="test" />
+          <label htmlFor="test">Test task</label>
+          <Button>Remove</Button>
+        </TaskListItem>
+      </TaskList>
+    </>
+  )
 }
 
 export default App
