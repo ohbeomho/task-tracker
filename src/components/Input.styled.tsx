@@ -8,7 +8,8 @@ const Input = styled.input`
   border-radius: 0.4rem;
   transition: all 0.2s;
 
-  &:hover {
+  &:hover,
+  &:focus {
     border-color: rgb(150, 150, 150);
   }
 `
