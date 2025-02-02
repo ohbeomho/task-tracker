@@ -14,7 +14,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  max-width: min(99vw, 400px);
+  width: min(99vw, 400px);
   gap: 2rem;
 }
 
