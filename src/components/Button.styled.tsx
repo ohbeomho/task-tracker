@@ -10,9 +10,15 @@ const Button = styled.button`
   user-select: none;
   cursor: pointer;
 
-  &:hover {
+  &:not(:disabled):hover {
     background-color: rgb(10, 10, 10);
     color: white;
+  }
+
+  &:disabled {
+    color: gray;
+    border-color: gray;
+    cursor: default;
   }
 `
 

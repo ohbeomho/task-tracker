@@ -1,7 +1,11 @@
 import { useCallback, useReducer, useState } from 'react'
 import Button from './components/Button.styled'
 import Input from './components/Input.styled'
-import { TaskList, TaskListItem } from './components/List.styled.tsx'
+import {
+  TaskList,
+  TaskListItem,
+  TaskTextInput,
+} from './components/List.styled.tsx'
 import Checkbox from './components/Checkbox.styled.tsx'
 
 type Task = {
@@ -10,7 +14,7 @@ type Task = {
 }
 
 type TaskAction = {
-  type: 'add' | 'remove' | 'mark'
+  type: 'add' | 'remove' | 'mark' | 'edit'
   task?: Task
   text?: string
   done?: boolean
@@ -29,6 +33,11 @@ function tasksReducer(tasks: Task[], action: TaskAction) {
     case 'mark':
       updated = tasks.map((task) =>
         task === action.task! ? { ...task, done: action.done! } : task,
+      )
+      break
+    case 'edit':
+      updated = tasks.map((task) =>
+        task === action.task! ? { ...task, text: action.text! } : task,
       )
   }
 
@@ -51,7 +60,9 @@ function getInitialTasks() {
 
 function App() {
   const [tasks, dispatch] = useReducer(tasksReducer, getInitialTasks())
+  const [editingTask, setEditingTask] = useState<Task | undefined>()
   const [text, setText] = useState('')
+  const [editText, setEditText] = useState('')
 
   const removeTask = useCallback(
     (task: Task) => dispatch({ type: 'remove', task }),
@@ -70,6 +81,19 @@ function App() {
         done,
       }),
     [],
+  )
+  const editTask = useCallback(
+    (task: Task) => {
+      if (!editText || !editingTask) return
+      dispatch({
+        type: 'edit',
+        task,
+        text: editText,
+      })
+      setEditText('')
+      setEditingTask(undefined)
+    },
+    [editingTask, editText],
   )
 
   return (
@@ -90,16 +114,48 @@ function App() {
         {tasks.length ? (
           tasks.map((task, idx) => (
             <TaskListItem key={idx} $done={task.done}>
-              <div>{task.text}</div>
+              {editingTask === task ? (
+                <TaskTextInput
+                  defaultValue={task.text}
+                  onInput={(e) => setEditText(e.currentTarget.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && editTask(task)}
+                  autoFocus
+                />
+              ) : (
+                <div>{task.text}</div>
+              )}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   Done:
                   <Checkbox
                     onChange={(e) => markTask(task, e.currentTarget.checked)}
                     checked={task.done}
+                    disabled={editingTask !== undefined}
                   />
                 </div>
-                <Button onClick={() => removeTask(task)}>Remove</Button>
+                {editingTask === task ? (
+                  <div>
+                    <Button onClick={() => setEditingTask(undefined)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => editTask(task)}>Apply</Button>
+                  </div>
+                ) : (
+                  <div>
+                    <Button
+                      onClick={() => setEditingTask(task)}
+                      disabled={Boolean(editingTask) && editingTask !== task}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => removeTask(task)}
+                      disabled={Boolean(editingTask) && editingTask !== task}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
               </div>
             </TaskListItem>
           ))

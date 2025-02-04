@@ -33,7 +33,7 @@ const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
   }
 
   & > div:first-child {
-    padding: 0 0.2rem 0 0.2rem;
+    padding: 0.3rem;
     text-decoration: ${(props) => (props.$done ? 'line-through' : 'none')};
     color: ${(props) => (props.$done ? 'gray' : 'inherit')};
     line-break: anywhere;
@@ -43,7 +43,14 @@ const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding-left: 0.2rem;
   }
 `
 
-export { TaskList, TaskListItem }
+const TaskTextInput = styled.input`
+  all: unset;
+  border-bottom: 2px solid rgb(10, 10, 10);
+  margin: 0.3rem;
+`
+
+export { TaskList, TaskListItem, TaskTextInput }
