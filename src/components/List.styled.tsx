@@ -47,10 +47,10 @@ const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
   }
 `
 
-const TaskTextInput = styled.input`
+const TaskContentInput = styled.input`
   all: unset;
   border-bottom: 2px solid rgb(10, 10, 10);
   margin: 0.3rem;
 `
 
-export { TaskList, TaskListItem, TaskTextInput }
+export { TaskList, TaskListItem, TaskContentInput }
