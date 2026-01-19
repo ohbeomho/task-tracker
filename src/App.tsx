@@ -10,7 +10,7 @@ import Checkbox from './components/Checkbox.styled.tsx'
 import type { Space, Task } from './task'
 
 type TaskAction = {
-  type: 'add' | 'remove' | 'mark' | 'edit'
+  type: 'add' | 'remove' | 'mark' | 'edit' | 'clear'
   task?: Task
   content?: string
   done?: boolean
@@ -42,6 +42,10 @@ function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
             }
           : task,
       )
+      break
+    case 'clear':
+      updated = []
+      break
   }
 
   localStorage.setItem(
@@ -59,7 +63,7 @@ function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
 
 async function fetchTasks(spaceId: string): Promise<Task[]> {
   try {
-    const url = `/api/tasks/${spaceId}`
+    const url = `/api/task/space/${spaceId}`
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error('Failed to fetch tasks')
@@ -130,7 +134,7 @@ function App() {
       )
       .catch((error) => {
         console.error('Error adding task:', error)
-        // Optionally revert the local state on error
+        dispatch({ type: 'remove', task: newTask })
       })
   }, [content, spaceId])
 
@@ -176,9 +180,9 @@ function App() {
   )
 
   const changeSpace = useCallback(
-    (space: string) => {
+    () => {
       if (
-        spaceId &&
+        !spaceId ||
         !confirm(
           `Current tasks are stored in browser's localStorage.
 If you connect to a space, your current tasks will be lost.
@@ -187,10 +191,15 @@ Continue?`,
       )
         return
 
-      setSpaceId(space)
-      // TODO: Load tasks from server for the new space
+      localStorage.setItem('space', JSON.stringify({ id: spaceId }))
+      setSpace(getSpace())
+
+      // Clear tasks when switching spaces
+      dispatch({ type: 'clear' })
+
+      fetchTasks(spaceId)
     },
-    [setSpaceId, spaceId],
+    [spaceId],
   )
 
   return (
@@ -266,7 +275,7 @@ Continue?`,
             value={spaceId}
             onInput={(e) => setSpaceId(e.currentTarget.value)}
           />
-          <Button onClick={() => changeSpace(spaceId)}>Set Space</Button>
+          <Button onClick={changeSpace}>Set Space</Button>
         </details>
       </div>
     </div>
