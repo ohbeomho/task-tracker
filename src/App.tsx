@@ -99,7 +99,12 @@ function App() {
   const removeTask = useCallback(
     (task: Task) => {
       dispatch({ type: 'remove', task })
-      // You might want to add an API call here to delete from server
+
+      if (!spaceId) return
+
+      fetch(`/api/task/${task.id}`, {
+        method: 'DELETE',
+      }).catch(console.error)
     },
     [spaceId],
   )
