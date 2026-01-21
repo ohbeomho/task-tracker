@@ -24,3 +24,8 @@ body {
   font-weight: 400;
   font-style: normal;
 }
+
+summary {
+  user-select: none;
+  font-weight: bold;
+}

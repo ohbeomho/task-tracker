@@ -1,31 +1,33 @@
-import { useCallback, useReducer, useState } from 'react'
+'use client'
+
+import { useCallback, useReducer, useState, useEffect } from 'react'
 import Button from './components/Button.styled'
 import Input from './components/Input.styled'
 import {
   TaskList,
   TaskListItem,
-  TaskTextInput,
+  TaskContentInput,
 } from './components/List.styled.tsx'
 import Checkbox from './components/Checkbox.styled.tsx'
-
-type Task = {
-  text: string
-  done: boolean
-}
+import type { Space, Task } from './task'
 
 type TaskAction = {
-  type: 'add' | 'remove' | 'mark' | 'edit'
+  type: 'add' | 'remove' | 'mark' | 'edit' | 'clear' | 'set'
   task?: Task
-  text?: string
+  tasks?: Task[]
+  content?: string
   done?: boolean
+  id?: number
 }
 
-function tasksReducer(tasks: Task[], action: TaskAction) {
+const API_HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8080'
+
+function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
   let updated: Task[]
 
   switch (action.type) {
     case 'add':
-      updated = [...tasks, { text: action.text!, done: false }]
+      updated = [...tasks, action.task!]
       break
     case 'remove':
       updated = tasks.filter((task) => task !== action.task!)
@@ -37,64 +39,259 @@ function tasksReducer(tasks: Task[], action: TaskAction) {
       break
     case 'edit':
       updated = tasks.map((task) =>
-        task === action.task! ? { ...task, text: action.text! } : task,
+        task === action.task!
+          ? {
+              ...task,
+              content: action.content || task.content,
+              id: action.id || task.id,
+            }
+          : task,
       )
+      break
+    case 'clear':
+      updated = []
+      break
+    case 'set':
+      updated = action.tasks || []
+      break
   }
 
-  localStorage.setItem(
-    'tasks',
-    JSON.stringify(
-      updated.sort((a, b) => {
-        if (a.done && !b.done) return -1
-        else if (b.done && !a.done) return 1
-        return 0
-      }),
-    ),
-  )
+  if (action.type !== 'set') {
+    localStorage.setItem(
+      'tasks',
+      JSON.stringify(
+        updated.sort((a, b) => {
+          if (a.done && !b.done) return -1
+          else if (b.done && !a.done) return 1
+          return 0
+        }),
+      ),
+    )
+  }
+
   return updated
 }
 
-function getInitialTasks() {
-  return JSON.parse(localStorage.getItem('tasks') || '[]')
+async function fetchTasks(spaceId: string): Promise<Task[]> {
+  const url = `${API_HOST}/api/task/space/${spaceId}`
+  const response = await fetch(url)
+  if (!response.ok) {
+    if (response.status === 404) {
+      const error = new Error('Space not found')
+      error.name = 'SpaceError'
+      throw error
+    }
+    throw new Error('Failed to fetch tasks')
+  }
+  return await response.json()
+}
+
+async function getInitialTasks(): Promise<Task[]> {
+  const space = getSpace()
+  return space
+    ? fetchTasks(space.id)
+    : JSON.parse(localStorage.getItem('tasks') || '[]')
+}
+
+function getSpace(): Space | null {
+  const space = JSON.parse(localStorage.getItem('space') || 'null')
+  return space
 }
 
 function App() {
-  const [tasks, dispatch] = useReducer(tasksReducer, getInitialTasks())
-  const [editingTask, setEditingTask] = useState<Task | undefined>()
-  const [text, setText] = useState('')
+  const [space, setSpace] = useState<Space | null>(getSpace())
+  const [spaceId, setSpaceId] = useState<string>(space?.id || '')
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [content, setContent] = useState('')
   const [editText, setEditText] = useState('')
 
+  const [tasks, dispatch] = useReducer(tasksReducer, [])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadTasks = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const initialTasks = await getInitialTasks()
+      dispatch({ type: 'set', tasks: initialTasks })
+    } catch (err) {
+      if (err instanceof Error && err.name === 'SpaceError') {
+        setError(err)
+        setSpace(null)
+        setSpaceId('')
+        localStorage.removeItem('space')
+        dispatch({ type: 'clear' })
+      } else {
+        console.error('Failed to load tasks:', err)
+        setError(err instanceof Error ? err : new Error('Failed to load tasks'))
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadTasks()
+  }, [loadTasks])
+
   const removeTask = useCallback(
-    (task: Task) => dispatch({ type: 'remove', task }),
-    [],
+    (task: Task) => {
+      dispatch({ type: 'remove', task })
+
+      if (!spaceId) return
+
+      fetch(`${API_HOST}/api/task/${task.id}`, {
+        method: 'DELETE',
+      }).catch(console.error)
+    },
+    [spaceId],
   )
+
   const addTask = useCallback(() => {
-    if (!text) return
-    dispatch({ type: 'add', text })
-    setText('')
-  }, [text])
+    if (!content) return
+    const newTask: Task = { content, done: false }
+    // Add to local state immediately for better UX
+    dispatch({ type: 'add', task: newTask })
+    setContent('')
+
+    if (!spaceId) return
+
+    // Then sync with server
+    fetch(`${API_HOST}/api/task`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...newTask, spaceId }),
+    })
+      .then((res) =>
+        res.status === 201
+          ? res.json()
+          : Promise.reject(new Error('Failed to add task')),
+      )
+      .then((createdTask) =>
+        dispatch({ type: 'edit', task: newTask, id: createdTask.id }),
+      )
+      .catch((error) => {
+        console.error('Error adding task:', error)
+        dispatch({ type: 'remove', task: newTask })
+      })
+  }, [content, spaceId])
+
   const markTask = useCallback(
-    (task: Task, done: boolean) =>
-      dispatch({
-        type: 'mark',
-        task,
-        done,
-      }),
-    [],
+    (task: Task, done: boolean) => {
+      dispatch({ type: 'mark', task, done })
+
+      if (!spaceId) return
+
+      // Update server
+      fetch(`${API_HOST}/api/task/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done }),
+      }).catch(console.error)
+    },
+    [spaceId],
   )
+
   const editTask = useCallback(
     (task: Task) => {
       if (!editText || !editingTask) return
+
       dispatch({
         type: 'edit',
         task,
-        text: editText,
+        content: editText,
       })
+
+      if (!spaceId) return
+
+      // Update server
+      fetch(`${API_HOST}/api/task/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editText }),
+      }).catch(console.error)
+
       setEditText('')
-      setEditingTask(undefined)
+      setEditingTask(null)
     },
-    [editingTask, editText],
+    [editingTask, editText, spaceId],
   )
+
+  const changeSpace = useCallback(() => {
+    if (space && spaceId === space.id) return
+    if (
+      !space
+        ? !confirm(
+            `Current tasks are stored in browser's localStorage.
+If you connect to a space, your current tasks will be lost.
+Continue?`,
+          )
+        : !confirm('Are you sure you want to change space?')
+    )
+      return
+
+    // Clear tasks when switching spaces
+    dispatch({ type: 'clear' })
+
+    if (spaceId === 'local') {
+      localStorage.removeItem('space')
+      setSpace(null)
+      setSpaceId('')
+      return
+    }
+
+    localStorage.setItem('space', JSON.stringify({ id: spaceId }))
+    setSpace(getSpace())
+
+    loadTasks()
+  }, [spaceId])
+
+  const createSpace = useCallback(() => {
+    if (spaceId) return
+
+    // Create space on server
+    fetch(`${API_HOST}/api/space`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: spaceId }),
+    })
+      .then((res) =>
+        res.status === 201
+          ? res.json()
+          : Promise.reject(new Error('Failed to create space')),
+      )
+      .then((createdSpace) => {
+        localStorage.setItem('space', JSON.stringify({ id: createdSpace.id }))
+        setSpace(getSpace())
+        setSpaceId(createdSpace.id)
+        dispatch({ type: 'clear' })
+      })
+      .catch((error) => {
+        console.error('Error creating space:', error)
+      })
+  }, [spaceId, setSpace, setSpaceId])
+
+  const deleteSpace = useCallback(() => {
+    if (!spaceId) return
+
+    // Delete space on server
+    fetch(`${API_HOST}/api/space/${spaceId}`, {
+      method: 'DELETE',
+    })
+      .then((res) => {
+        if (res.status === 204) {
+          localStorage.removeItem('space')
+          setSpace(null)
+          setSpaceId('')
+          dispatch({ type: 'clear' })
+        } else {
+          throw new Error('Failed to delete space')
+        }
+      })
+      .catch((error) => {
+        console.error('Error deleting space:', error)
+      })
+  }, [spaceId, setSpace, setSpaceId])
 
   return (
     <div className="container">
@@ -104,25 +301,33 @@ function App() {
       <div style={{ display: 'flex' }}>
         <Input
           placeholder="Enter your task here"
-          value={text}
-          onInput={(e) => setText(e.currentTarget.value)}
+          value={content}
+          onInput={(e) => setContent(e.currentTarget.value)}
           onKeyDown={(e) => e.key === 'Enter' && addTask()}
         />
         <Button onClick={addTask}>Add</Button>
       </div>
       <TaskList>
-        {tasks.length ? (
+        {error ? (
+          <TaskListItem style={{ color: 'red', textAlign: 'center' }}>
+            Error: {(error as Error).message}
+          </TaskListItem>
+        ) : isLoading ? (
+          <TaskListItem style={{ textAlign: 'center' }}>
+            Loading...
+          </TaskListItem>
+        ) : tasks.length ? (
           tasks.map((task, idx) => (
             <TaskListItem key={idx} $done={task.done}>
               {editingTask === task ? (
-                <TaskTextInput
-                  defaultValue={task.text}
+                <TaskContentInput
+                  defaultValue={task.content}
                   onInput={(e) => setEditText(e.currentTarget.value)}
                   onKeyDown={(e) => e.key === 'Enter' && editTask(task)}
                   autoFocus
                 />
               ) : (
-                <div>{task.text}</div>
+                <div>{task.content}</div>
               )}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -130,14 +335,12 @@ function App() {
                   <Checkbox
                     onChange={(e) => markTask(task, e.currentTarget.checked)}
                     checked={task.done}
-                    disabled={editingTask !== undefined}
+                    disabled={editingTask !== null}
                   />
                 </div>
                 {editingTask === task ? (
                   <div>
-                    <Button onClick={() => setEditingTask(undefined)}>
-                      Cancel
-                    </Button>
+                    <Button onClick={() => setEditingTask(null)}>Cancel</Button>
                     <Button onClick={() => editTask(task)}>Apply</Button>
                   </div>
                 ) : (
@@ -160,9 +363,65 @@ function App() {
             </TaskListItem>
           ))
         ) : (
-          <li style={{ color: 'gray', textAlign: 'center' }}>Nothing here</li>
+          <TaskListItem style={{ color: 'gray', textAlign: 'center' }}>
+            Nothing here
+          </TaskListItem>
         )}
       </TaskList>
+      <div
+        style={{
+          position: 'fixed',
+          left: 10,
+          top: 10,
+          backgroundColor: 'white',
+          padding: '10px',
+          borderRadius: '5px',
+          border: '1px solid black',
+        }}
+      >
+        <span>
+          {space ? (
+            <>
+              Space Connected
+              <br />
+              {space.id}
+            </>
+          ) : (
+            'No space connected'
+          )}
+        </span>
+        <br />
+        <details>
+          <summary>Options</summary>
+          <p>
+            {space && (
+              <>
+                <span style={{ color: 'gray' }}>
+                  Enter 'local' to use localStorage
+                </span>
+                <br />
+              </>
+            )}
+            <Input
+              placeholder="Enter space ID"
+              value={spaceId}
+              onInput={(e) => setSpaceId(e.currentTarget.value)}
+            />
+            <Button onClick={changeSpace}>Set Space</Button>
+          </p>
+          {!space && <Button onClick={createSpace}>Create Space</Button>}
+          {space && (
+            <>
+              <Button onClick={deleteSpace}>Delete Space</Button>
+              <Button onClick={() => navigator.clipboard.writeText(space.id)}>
+                Copy Space ID
+              </Button>
+              <br />
+              <Button onClick={loadTasks}>Refresh Tasks</Button>
+            </>
+          )}
+        </details>
+      </div>
     </div>
   )
 }
