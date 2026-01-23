@@ -4,7 +4,10 @@ const TaskList = styled.ul`
   width: 100%;
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: var(--shadow);
 `
 
 const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
@@ -14,43 +17,48 @@ const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
-  background-color: rgb(240, 240, 240);
-  padding: 0.4rem;
-  width: calc(100% - 0.8rem);
-
-  &:nth-child(even) {
-    background-color: rgb(225, 225, 225);
-  }
-
-  &:first-child {
-    border-top-left-radius: 0.4rem;
-    border-top-right-radius: 0.4rem;
-  }
+  background-color: var(--task-bg);
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
 
   &:last-child {
-    border-bottom-left-radius: 0.4rem;
-    border-bottom-right-radius: 0.4rem;
+    border-bottom: none;
   }
 
   & > div:first-child {
-    padding: 0.3rem;
+    padding: 0.25rem 0;
     text-decoration: ${(props) => (props.$done ? 'line-through' : 'none')};
-    color: ${(props) => (props.$done ? 'gray' : 'inherit')};
+    color: ${(props) =>
+      props.$done ? 'var(--task-done)' : 'var(--text-color)'};
     line-break: anywhere;
+    overflow-wrap: break-word;
+    opacity: ${(props) => (props.$done ? 0.8 : 1)};
   }
 
   & > div:last-child {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-left: 0.2rem;
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
   }
 `
 
 const TaskContentInput = styled.input`
   all: unset;
-  border-bottom: 2px solid rgb(10, 10, 10);
-  margin: 0.3rem;
+  width: 100%;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid var(--border-color);
+  margin: 0.25rem 0;
+  color: var(--input-text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-bottom-color: var(--button-bg);
+  }
 `
 
 export { TaskList, TaskListItem, TaskContentInput }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useReducer, useState, useEffect } from 'react'
+import { useTheme } from './contexts/ThemeContext'
 import Button from './components/Button.styled'
 import Input from './components/Input.styled'
 import {
@@ -108,6 +109,7 @@ function App() {
   const [tasks, dispatch] = useReducer(tasksReducer, [])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const { theme, toggleTheme } = useTheme()
 
   const loadTasks = useCallback(async () => {
     try {
@@ -244,7 +246,7 @@ Continue?`,
     setSpace(getSpace())
 
     loadTasks()
-  }, [spaceId])
+  }, [spaceId, space, loadTasks])
 
   const createSpace = useCallback(() => {
     if (spaceId) return
@@ -295,88 +297,21 @@ Continue?`,
 
   return (
     <div className="container">
-      <h1>
-        {tasks.length} Task{tasks.length === 1 ? '' : 's'}
-      </h1>
-      <div style={{ display: 'flex' }}>
-        <Input
-          placeholder="Enter your task here"
-          value={content}
-          onInput={(e) => setContent(e.currentTarget.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addTask()}
-        />
-        <Button onClick={addTask}>Add</Button>
-      </div>
-      <TaskList>
-        {error ? (
-          <TaskListItem style={{ color: 'red', textAlign: 'center' }}>
-            Error: {(error as Error).message}
-          </TaskListItem>
-        ) : isLoading ? (
-          <TaskListItem style={{ textAlign: 'center' }}>
-            Loading...
-          </TaskListItem>
-        ) : tasks.length ? (
-          tasks.map((task, idx) => (
-            <TaskListItem key={idx} $done={task.done}>
-              {editingTask === task ? (
-                <TaskContentInput
-                  defaultValue={task.content}
-                  onInput={(e) => setEditText(e.currentTarget.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && editTask(task)}
-                  autoFocus
-                />
-              ) : (
-                <div>{task.content}</div>
-              )}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  Done:
-                  <Checkbox
-                    onChange={(e) => markTask(task, e.currentTarget.checked)}
-                    checked={task.done}
-                    disabled={editingTask !== null}
-                  />
-                </div>
-                {editingTask === task ? (
-                  <div>
-                    <Button onClick={() => setEditingTask(null)}>Cancel</Button>
-                    <Button onClick={() => editTask(task)}>Apply</Button>
-                  </div>
-                ) : (
-                  <div>
-                    <Button
-                      onClick={() => setEditingTask(task)}
-                      disabled={Boolean(editingTask) && editingTask !== task}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => removeTask(task)}
-                      disabled={Boolean(editingTask) && editingTask !== task}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </TaskListItem>
-          ))
-        ) : (
-          <TaskListItem style={{ color: 'gray', textAlign: 'center' }}>
-            Nothing here
-          </TaskListItem>
-        )}
-      </TaskList>
+      <Button
+        style={{ position: 'fixed', top: 10, right: 10 }}
+        onClick={toggleTheme}
+      >
+        {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+      </Button>
       <div
         style={{
           position: 'fixed',
           left: 10,
           top: 10,
-          backgroundColor: 'white',
+          backgroundColor: 'var(--bg-color)',
           padding: '10px',
           borderRadius: '5px',
-          border: '1px solid black',
+          border: '2px solid var(--border-color)',
         }}
       >
         <span>
@@ -422,6 +357,79 @@ Continue?`,
           )}
         </details>
       </div>
+      <h1>
+        {tasks.length} Task{tasks.length === 1 ? '' : 's'}
+      </h1>
+      <div style={{ display: 'flex' }}>
+        <Input
+          placeholder="Enter your task here"
+          value={content}
+          onInput={(e) => setContent(e.currentTarget.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addTask()}
+        />
+        <Button onClick={addTask}>Add</Button>
+      </div>
+      <TaskList>
+        {error ? (
+          <TaskListItem style={{ color: 'red', textAlign: 'center' }}>
+            Error: {(error as Error).message}
+          </TaskListItem>
+        ) : isLoading ? (
+          <TaskListItem style={{ textAlign: 'center' }}>
+            Loading...
+          </TaskListItem>
+        ) : tasks.length ? (
+          tasks.map((task, idx) => (
+            <TaskListItem key={idx} $done={task.done}>
+              {editingTask === task ? (
+                <TaskContentInput
+                  defaultValue={task.content}
+                  onInput={(e) => setEditText(e.currentTarget.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && editTask(task)}
+                  autoFocus
+                />
+              ) : (
+                <div>{task.content}</div>
+              )}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  Done:&nbsp;
+                  <Checkbox
+                    onChange={(e) => markTask(task, e.currentTarget.checked)}
+                    checked={task.done}
+                    disabled={editingTask !== null}
+                  />
+                </div>
+                {editingTask === task ? (
+                  <div>
+                    <Button onClick={() => setEditingTask(null)}>Cancel</Button>
+                    <Button onClick={() => editTask(task)}>Apply</Button>
+                  </div>
+                ) : (
+                  <div>
+                    <Button
+                      onClick={() => setEditingTask(task)}
+                      disabled={Boolean(editingTask) && editingTask !== task}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => removeTask(task)}
+                      disabled={Boolean(editingTask) && editingTask !== task}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TaskListItem>
+          ))
+        ) : (
+          <TaskListItem style={{ color: 'gray', textAlign: 'center' }}>
+            Nothing here
+          </TaskListItem>
+        )}
+      </TaskList>
     </div>
   )
 }

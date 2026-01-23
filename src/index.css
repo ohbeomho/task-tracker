@@ -1,5 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
 
+:root {
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --input-bg: #f0f0f0;
+  --input-text: #1a1a1a;
+  --border-color: #cac0c0;
+  --button-bg: #4f46e5;
+  --button-hover: #4338ca;
+  --button-text: #ffffff;
+  --task-bg: #ffffff;
+  --task-done: #9ca3af;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  --bg-color: #1f2937;
+  --text-color: #f3f4f6;
+  --input-bg: #374151;
+  --input-text: #f9fafb;
+  --border-color: #4b5563;
+  --button-bg: #6366f1;
+  --button-hover: #4f46e5;
+  --button-text: #f9fafb;
+  --task-bg: #2f3641;
+  --task-done: #9ca3af;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
+}
+
 body {
   margin: 0;
   display: flex;
@@ -7,6 +35,9 @@ body {
   align-items: center;
   min-height: 100vh;
   font-size: 1.1rem;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -16,6 +47,7 @@ body {
   align-items: center;
   width: min(99vw, 400px);
   gap: 2rem;
+  padding: 2rem 0;
 }
 
 * {
@@ -23,9 +55,15 @@ body {
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
+  box-sizing: border-box;
 }
 
 summary {
   user-select: none;
   font-weight: bold;
+  cursor: pointer;
+}
+
+button, input, textarea {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
