@@ -29,9 +29,10 @@ const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
   & > div:first-child {
     padding: 0.25rem 0;
     text-decoration: ${(props) => (props.$done ? 'line-through' : 'none')};
-    color: ${(props) => (props.$done ? 'var(--task-done)' : 'var(--text-color)')};
+    color: ${(props) =>
+      props.$done ? 'var(--task-done)' : 'var(--text-color)'};
     line-break: anywhere;
-    word-break: break-word;
+    overflow-wrap: break-word;
     opacity: ${(props) => (props.$done ? 0.8 : 1)};
   }
 
