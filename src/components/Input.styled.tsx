@@ -2,15 +2,31 @@ import styled from 'styled-components'
 
 const Input = styled.input`
   all: unset;
-  padding: 0.4rem;
-  margin: 0.1rem;
-  border: 2px solid rgb(10, 10, 10);
-  border-radius: 0.4rem;
-  transition: all 0.2s;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin: 0.25rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 
-  &:hover,
+  &::placeholder {
+    color: var(--task-done);
+    opacity: 0.7;
+  }
+
+  &:hover {
+    border-color: var(--button-bg);
+    box-shadow: 0 0 0 1px var(--button-bg);
+  }
+
   &:focus {
-    border-color: rgb(150, 150, 150);
+    outline: none;
+    border-color: var(--button-bg);
+    box-shadow: 0 0 0 2px var(--button-bg);
   }
 `
 
