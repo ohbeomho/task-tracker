@@ -246,7 +246,7 @@ Continue?`,
     setSpace(getSpace())
 
     loadTasks()
-  }, [spaceId])
+  }, [spaceId, space, loadTasks])
 
   const createSpace = useCallback(() => {
     if (spaceId) return
