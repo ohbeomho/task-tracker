@@ -2,6 +2,7 @@ import styled from 'styled-components'
 
 const TaskList = styled.ul`
   width: 100%;
+  max-width: min(95%, 500px);
   list-style: none;
   padding: 0;
   margin: 1rem 0;

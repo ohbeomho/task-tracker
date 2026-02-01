@@ -11,7 +11,8 @@
   --button-text: #ffffff;
   --task-bg: #ffffff;
   --task-done: #9ca3af;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .dark {
@@ -25,7 +26,8 @@
   --button-text: #f9fafb;
   --task-bg: #2f3641;
   --task-done: #9ca3af;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
+  --shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
 }
 
 body {
@@ -35,19 +37,31 @@ body {
   align-items: center;
   min-height: 100vh;
   font-size: 1.1rem;
-  background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 .container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  align-items: stretch;
+}
+
+main {
+  background-color: var(--bg-color);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: min(99vw, 400px);
   gap: 2rem;
-  padding: 2rem 0;
+  padding: 0.5rem;
+  flex: 1;
+  position: relative;
 }
 
 * {
@@ -64,6 +78,11 @@ summary {
   cursor: pointer;
 }
 
-button, input, textarea {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+button,
+input,
+textarea {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }

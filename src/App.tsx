@@ -8,9 +8,11 @@ import {
   TaskList,
   TaskListItem,
   TaskContentInput,
-} from './components/List.styled.tsx'
+} from './components/TaskList.styled.tsx'
 import Checkbox from './components/Checkbox.styled.tsx'
 import type { Space, Task } from './task'
+import Menu from './components/Menu.styled.tsx'
+import MenuIcon from './components/MenuIcon.tsx'
 
 type TaskAction = {
   type: 'add' | 'remove' | 'mark' | 'edit' | 'clear' | 'set'
@@ -105,6 +107,7 @@ function App() {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [content, setContent] = useState('')
   const [editText, setEditText] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const [tasks, dispatch] = useReducer(tasksReducer, [])
   const [isLoading, setIsLoading] = useState(true)
@@ -297,139 +300,153 @@ Continue?`,
 
   return (
     <div className="container">
-      <Button
-        style={{ position: 'fixed', top: 10, right: 10 }}
-        onClick={toggleTheme}
-      >
-        {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-      </Button>
-      <div
-        style={{
-          position: 'fixed',
-          left: 10,
-          top: 10,
-          backgroundColor: 'var(--bg-color)',
-          padding: '10px',
-          borderRadius: '5px',
-          border: '2px solid var(--border-color)',
-        }}
-      >
-        <span>
-          {space ? (
-            <>
-              Space Connected
-              <br />
-              {space.id}
-            </>
-          ) : (
-            'No space connected'
-          )}
-        </span>
-        <br />
-        <details>
-          <summary>Options</summary>
-          <p>
-            {space && (
-              <>
-                <span style={{ color: 'gray' }}>
-                  Enter 'local' to use localStorage
-                </span>
-                <br />
-              </>
-            )}
-            <Input
-              placeholder="Enter space ID"
-              value={spaceId}
-              onInput={(e) => setSpaceId(e.currentTarget.value)}
-            />
-            <Button onClick={changeSpace}>Set Space</Button>
-          </p>
-          {!space && <Button onClick={createSpace}>Create Space</Button>}
-          {space && (
-            <>
-              <Button onClick={deleteSpace}>Delete Space</Button>
-              <Button onClick={() => navigator.clipboard.writeText(space.id)}>
-                Copy Space ID
-              </Button>
-              <br />
-              <Button onClick={loadTasks}>Refresh Tasks</Button>
-            </>
-          )}
-        </details>
-      </div>
-      <h1>
-        {tasks.length} Task{tasks.length === 1 ? '' : 's'}
-      </h1>
-      <div style={{ display: 'flex' }}>
-        <Input
-          placeholder="Enter your task here"
-          value={content}
-          onInput={(e) => setContent(e.currentTarget.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addTask()}
-        />
-        <Button onClick={addTask}>Add</Button>
-      </div>
-      <TaskList>
-        {error ? (
-          <TaskListItem style={{ color: 'red', textAlign: 'center' }}>
-            Error: {(error as Error).message}
-          </TaskListItem>
-        ) : isLoading ? (
-          <TaskListItem style={{ textAlign: 'center' }}>
-            Loading...
-          </TaskListItem>
-        ) : tasks.length ? (
-          tasks.map((task, idx) => (
-            <TaskListItem key={idx} $done={task.done}>
-              {editingTask === task ? (
-                <TaskContentInput
-                  defaultValue={task.content}
-                  onInput={(e) => setEditText(e.currentTarget.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && editTask(task)}
-                  autoFocus
-                />
+      <Menu className={menuOpen ? 'open' : ''}>
+        <div>
+          <div
+            style={{
+              backgroundColor: 'var(--bg-color)',
+              padding: '10px',
+              borderRadius: '5px',
+              border: '2px solid var(--border-color)',
+              whiteSpace: 'wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            <span>
+              {space ? (
+                <>
+                  Space Connected
+                  <br />
+                  {space.id}
+                </>
               ) : (
-                <div>{task.content}</div>
+                'No space connected'
               )}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  Done:&nbsp;
-                  <Checkbox
-                    onChange={(e) => markTask(task, e.currentTarget.checked)}
-                    checked={task.done}
-                    disabled={editingTask !== null}
-                  />
-                </div>
-                {editingTask === task ? (
-                  <div>
-                    <Button onClick={() => setEditingTask(null)}>Cancel</Button>
-                    <Button onClick={() => editTask(task)}>Apply</Button>
-                  </div>
-                ) : (
-                  <div>
-                    <Button
-                      onClick={() => setEditingTask(task)}
-                      disabled={Boolean(editingTask) && editingTask !== task}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => removeTask(task)}
-                      disabled={Boolean(editingTask) && editingTask !== task}
-                    >
-                      Remove
-                    </Button>
-                  </div>
+            </span>
+            <br />
+            <details>
+              <summary>Options</summary>
+              <p>
+                {space && (
+                  <>
+                    <span style={{ color: 'gray' }}>
+                      Enter 'local' to use localStorage
+                    </span>
+                    <br />
+                  </>
                 )}
-              </div>
+                <Input
+                  placeholder="Enter space ID"
+                  value={spaceId}
+                  onInput={(e) => setSpaceId(e.currentTarget.value)}
+                />
+                <Button onClick={changeSpace}>Set Space</Button>
+              </p>
+              {!space && <Button onClick={createSpace}>Create Space</Button>}
+              {space && (
+                <>
+                  <Button onClick={deleteSpace}>Delete Space</Button>
+                  <Button
+                    onClick={() => navigator.clipboard.writeText(space.id)}
+                  >
+                    Copy Space ID
+                  </Button>
+                  <br />
+                  <Button onClick={loadTasks}>Refresh Tasks</Button>
+                </>
+              )}
+            </details>
+          </div>
+          <Button onClick={toggleTheme}>
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </Button>
+        </div>
+      </Menu>
+      <main>
+        <MenuIcon isOpen={menuOpen} onClick={() => setMenuOpen(!menuOpen)} />
+        <h1>
+          {tasks.length} Task{tasks.length === 1 ? '' : 's'}
+        </h1>
+        <div style={{ display: 'flex' }}>
+          <Input
+            placeholder="Enter your task here"
+            value={content}
+            onInput={(e) => setContent(e.currentTarget.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addTask()}
+          />
+          <Button onClick={addTask}>Add</Button>
+        </div>
+        <TaskList>
+          {error ? (
+            <TaskListItem style={{ color: 'red', textAlign: 'center' }}>
+              Error: {(error as Error).message}
             </TaskListItem>
-          ))
-        ) : (
-          <TaskListItem style={{ color: 'gray', textAlign: 'center' }}>
-            Nothing here
-          </TaskListItem>
-        )}
-      </TaskList>
+          ) : isLoading ? (
+            <TaskListItem style={{ textAlign: 'center' }}>
+              Loading...
+            </TaskListItem>
+          ) : tasks.length ? (
+            tasks.map((task, idx) => (
+              <TaskListItem key={idx} $done={task.done}>
+                {editingTask === task ? (
+                  <TaskContentInput
+                    defaultValue={task.content}
+                    onInput={(e) => setEditText(e.currentTarget.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && editTask(task)}
+                    autoFocus
+                  />
+                ) : (
+                  <div>{task.content}</div>
+                )}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    Done:&nbsp;
+                    <Checkbox
+                      onChange={(e) => markTask(task, e.currentTarget.checked)}
+                      checked={task.done}
+                      disabled={editingTask !== null}
+                    />
+                  </div>
+                  {editingTask === task ? (
+                    <div>
+                      <Button onClick={() => setEditingTask(null)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={() => editTask(task)}>Apply</Button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Button
+                        onClick={() => setEditingTask(task)}
+                        disabled={Boolean(editingTask) && editingTask !== task}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => removeTask(task)}
+                        disabled={Boolean(editingTask) && editingTask !== task}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </TaskListItem>
+            ))
+          ) : (
+            <TaskListItem style={{ color: 'gray', textAlign: 'center' }}>
+              Nothing here
+            </TaskListItem>
+          )}
+        </TaskList>
+      </main>
     </div>
   )
 }
