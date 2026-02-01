@@ -21,7 +21,8 @@ const Menu = styled.div`
   }
 
   &.open {
-    max-height: min(100vh, 400px);
+    max-height: min(100vh, 600px);
+    overflow: auto;
   }
 
   &.open > div {
