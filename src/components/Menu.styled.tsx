@@ -3,15 +3,17 @@ import styled from 'styled-components'
 const Menu = styled.div`
   background-color: var(--bg-color);
   max-height: 0px;
+  height: 100vh;
   overflow: hidden;
   transition: all 0.3s ease;
   background-color: var(--bg-color);
+  position: relative;
 
   & > div {
     backdrop-filter: brightness(1.2);
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     gap: 1rem;
     padding: 0rem;
@@ -21,12 +23,21 @@ const Menu = styled.div`
   }
 
   &.open {
-    max-height: min(100vh, 600px);
+    max-height: calc(100svh - 5rem);
     overflow: auto;
   }
 
   &.open > div {
     padding: 1rem;
+  }
+
+  & > h1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    text-align: center;
+    padding: 1rem;
+    margin: 0;
   }
 `
 

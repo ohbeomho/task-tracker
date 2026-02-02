@@ -37,6 +37,7 @@ body {
   align-items: center;
   min-height: 100vh;
   font-size: 1.1rem;
+  background-color: var(--bg-color);
   color: var(--text-color);
   transition:
     background-color 0.3s ease,
@@ -45,11 +46,15 @@ body {
 
 .container {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: stretch;
   align-items: stretch;
+}
+
+.container:has(.menu.open) {
+  overflow: hidden;
 }
 
 main {
@@ -62,6 +67,14 @@ main {
   padding: 0.5rem;
   flex: 1;
   position: relative;
+}
+
+main > * {
+  transition: opacity 0.3s ease;
+}
+
+.menu.open ~ main > *:not(.menu-icon) {
+  opacity: 0;
 }
 
 * {

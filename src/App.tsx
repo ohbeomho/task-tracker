@@ -300,7 +300,8 @@ Continue?`,
 
   return (
     <div className="container">
-      <Menu className={menuOpen ? 'open' : ''}>
+      <Menu className={`menu ${menuOpen ? 'open' : ''}`}>
+        <h1>Menu</h1>
         <div>
           <div
             style={{

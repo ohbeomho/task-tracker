@@ -45,6 +45,7 @@ interface MenuIconProps {
 const MenuIcon = ({ isOpen, onClick }: MenuIconProps) => {
   return (
     <MenuButton
+      className="menu-icon"
       onClick={onClick}
       aria-label={isOpen ? 'Close menu' : 'Open menu'}
       aria-expanded={isOpen}
