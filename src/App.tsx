@@ -25,6 +25,15 @@ type TaskAction = {
 
 const API_HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8080'
 
+function sortTasks(tasks: Task[]): Task[] {
+  return tasks.sort((a, b) => {
+    if (!a.done && b.done) return -1
+    else if (a.done && !b.done) return 1
+
+    return 0
+  })
+}
+
 function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
   let updated: Task[]
 
@@ -60,16 +69,7 @@ function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
   }
 
   if (action.type !== 'set') {
-    localStorage.setItem(
-      'tasks',
-      JSON.stringify(
-        updated.sort((a, b) => {
-          if (a.done && !b.done) return -1
-          else if (b.done && !a.done) return 1
-          return 0
-        }),
-      ),
-    )
+    localStorage.setItem('tasks', JSON.stringify(sortTasks(updated)))
   }
 
   return updated
@@ -91,9 +91,11 @@ async function fetchTasks(spaceId: string): Promise<Task[]> {
 
 async function getInitialTasks(): Promise<Task[]> {
   const space = getSpace()
-  return space
-    ? fetchTasks(space.id)
-    : JSON.parse(localStorage.getItem('tasks') || '[]')
+  return sortTasks(
+    space
+      ? await fetchTasks(space.id)
+      : JSON.parse(localStorage.getItem('tasks') || '[]'),
+  )
 }
 
 function getSpace(): Space | null {
