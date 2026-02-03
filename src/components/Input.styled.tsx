@@ -14,7 +14,6 @@ const Input = styled.input`
   box-sizing: border-box;
 
   &::placeholder {
-    color: var(--task-done);
     opacity: 0.7;
   }
 

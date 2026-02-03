@@ -9,8 +9,8 @@
   --button-bg: #4f46e5;
   --button-hover: #4338ca;
   --button-text: #ffffff;
-  --task-bg: #ffffff;
-  --task-done: #9ca3af;
+  --task-bg: #dcdbdb;
+  --task-active: #a6a2ed;
   --shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -25,7 +25,7 @@
   --button-hover: #4f46e5;
   --button-text: #f9fafb;
   --task-bg: #2f3641;
-  --task-done: #9ca3af;
+  --task-active: #373568;
   --shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
 }

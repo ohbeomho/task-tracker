@@ -11,14 +11,15 @@ const TaskList = styled.ul`
   box-shadow: var(--shadow);
 `
 
-const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
-  $done: props.$done || false,
+const TaskListItem = styled.li.attrs<{ $status?: number }>((props) => ({
+  $status: props.$status || 0,
 }))`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: stretch;
-  background-color: var(--task-bg);
+  background-color: ${(props) =>
+    props.$status === -1 ? 'var(--task-active)' : 'var(--task-bg)'};
   padding: 0.75rem 1rem;
   transition: all 0.2s ease;
   border-bottom: 1px solid var(--border-color);
@@ -29,12 +30,13 @@ const TaskListItem = styled.li.attrs<{ $done?: boolean }>((props) => ({
 
   & > div:first-child {
     padding: 0.25rem 0;
-    text-decoration: ${(props) => (props.$done ? 'line-through' : 'none')};
+    text-decoration: ${(props) =>
+      props.$status === 1 ? 'line-through' : 'none'};
     color: ${(props) =>
-      props.$done ? 'var(--task-done)' : 'var(--text-color)'};
+      props.$status === 1 ? 'var(--task-done)' : 'var(--text-color)'};
     line-break: anywhere;
     overflow-wrap: break-word;
-    opacity: ${(props) => (props.$done ? 0.8 : 1)};
+    opacity: ${(props) => (props.$status === 1 ? 0.8 : 1)};
   }
 
   & > div:last-child {

@@ -19,19 +19,14 @@ type TaskAction = {
   task?: Task
   tasks?: Task[]
   content?: string
-  done?: boolean
+  status?: number
   id?: number
 }
 
 const API_HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8080'
 
 function sortTasks(tasks: Task[]): Task[] {
-  return tasks.sort((a, b) => {
-    if (!a.done && b.done) return -1
-    else if (a.done && !b.done) return 1
-
-    return 0
-  })
+  return tasks.sort((a, b) => a.status - b.status)
 }
 
 function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
@@ -46,7 +41,7 @@ function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
       break
     case 'mark':
       updated = tasks.map((task) =>
-        task === action.task! ? { ...task, done: action.done! } : task,
+        task === action.task! ? { ...task, status: action.status! } : task,
       )
       break
     case 'edit':
@@ -156,7 +151,7 @@ function App() {
 
   const addTask = useCallback(() => {
     if (!content) return
-    const newTask: Task = { content, done: false }
+    const newTask: Task = { content, status: 0 }
     // Add to local state immediately for better UX
     dispatch({ type: 'add', task: newTask })
     setContent('')
@@ -183,9 +178,9 @@ function App() {
       })
   }, [content, spaceId])
 
-  const markTask = useCallback(
-    (task: Task, done: boolean) => {
-      dispatch({ type: 'mark', task, done })
+  const changeStatus = useCallback(
+    (task: Task, status: number) => {
+      dispatch({ type: 'mark', task, status })
 
       if (!spaceId) return
 
@@ -193,7 +188,7 @@ function App() {
       fetch(`${API_HOST}/api/task/${task.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ done }),
+        body: JSON.stringify({ status }),
       }).catch(console.error)
     },
     [spaceId],
@@ -390,7 +385,7 @@ Continue?`,
             </TaskListItem>
           ) : tasks.length ? (
             tasks.map((task, idx) => (
-              <TaskListItem key={idx} $done={task.done}>
+              <TaskListItem key={idx} $status={task.status}>
                 {editingTask === task ? (
                   <TaskContentInput
                     defaultValue={task.content}
@@ -405,8 +400,18 @@ Continue?`,
                   <div style={{ display: 'flex', alignItems: 'center' }}>
                     Done:&nbsp;
                     <Checkbox
-                      onChange={(e) => markTask(task, e.currentTarget.checked)}
-                      checked={task.done}
+                      onChange={(e) =>
+                        changeStatus(task, e.currentTarget.checked ? 1 : 0)
+                      }
+                      checked={task.status === 1}
+                      disabled={editingTask !== null}
+                    />
+                    &nbsp;Active:
+                    <Checkbox
+                      onChange={(e) =>
+                        changeStatus(task, e.currentTarget.checked ? -1 : 0)
+                      }
+                      checked={task.status === -1}
                       disabled={editingTask !== null}
                     />
                   </div>
