@@ -85,7 +85,7 @@ async function fetchTasks(spaceId: string): Promise<Task[]> {
 }
 
 async function getInitialTasks(): Promise<Task[]> {
-  const space = getSpace()
+  const space = await getSpace()
   return sortTasks(
     space
       ? await fetchTasks(space.id)
@@ -93,14 +93,26 @@ async function getInitialTasks(): Promise<Task[]> {
   )
 }
 
-function getSpace(): Space | null {
+async function getSpace(): Promise<Space | null> {
   const space = JSON.parse(localStorage.getItem('space') || 'null')
+
+  if (space) {
+    const response = await fetch(`${API_HOST}/api/space/${space.id}`)
+    if (!response.ok) {
+      localStorage.removeItem('space')
+      return null
+    }
+
+    const spaceData = await response.json()
+    space.name = spaceData.name
+  }
+
   return space
 }
 
 function App() {
-  const [space, setSpace] = useState<Space | null>(getSpace())
-  const [spaceId, setSpaceId] = useState<string>(space?.id || '')
+  const [space, setSpace] = useState<Space | null>(null)
+  const [spaceId, setSpaceId] = useState<string>('')
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [content, setContent] = useState('')
   const [editText, setEditText] = useState('')
@@ -133,7 +145,11 @@ function App() {
   }, [])
 
   useEffect(() => {
-    loadTasks()
+    getSpace().then((space) => {
+      setSpace(space)
+      setSpaceId(space?.id || '')
+      loadTasks()
+    })
   }, [loadTasks])
 
   const removeTask = useCallback(
@@ -219,7 +235,7 @@ function App() {
     [editingTask, editText, spaceId],
   )
 
-  const changeSpace = useCallback(() => {
+  const changeSpace = useCallback(async () => {
     if (space && spaceId === space.id) return
     if (
       !space
@@ -243,56 +259,61 @@ Continue?`,
     }
 
     localStorage.setItem('space', JSON.stringify({ id: spaceId }))
-    setSpace(getSpace())
+    setSpace(await getSpace())
 
     loadTasks()
   }, [spaceId, space, loadTasks])
 
-  const createSpace = useCallback(() => {
+  const createSpace = useCallback(async () => {
     if (spaceId) return
 
+    const spaceName = prompt('Enter space name:')
+    if (!spaceName) return
+
     // Create space on server
-    fetch(`${API_HOST}/api/space`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: spaceId }),
-    })
-      .then((res) =>
-        res.status === 201
-          ? res.json()
-          : Promise.reject(new Error('Failed to create space')),
+    try {
+      const response = await fetch(`${API_HOST}/api/space`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: spaceId, name: spaceName }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create space')
+      }
+      const createdSpace = await response.json()
+      localStorage.setItem(
+        'space',
+        JSON.stringify({ id: createdSpace.id, name: spaceName }),
       )
-      .then((createdSpace) => {
-        localStorage.setItem('space', JSON.stringify({ id: createdSpace.id }))
-        setSpace(getSpace())
-        setSpaceId(createdSpace.id)
-        dispatch({ type: 'clear' })
-      })
-      .catch((error) => {
-        console.error('Error creating space:', error)
-      })
+
+      setSpace(await getSpace())
+      setSpaceId(createdSpace.id)
+      dispatch({ type: 'clear' })
+    } catch (error) {
+      console.error('Error creating space:', error)
+    }
   }, [spaceId, setSpace, setSpaceId])
 
-  const deleteSpace = useCallback(() => {
+  const deleteSpace = useCallback(async () => {
     if (!spaceId) return
 
     // Delete space on server
-    fetch(`${API_HOST}/api/space/${spaceId}`, {
-      method: 'DELETE',
-    })
-      .then((res) => {
-        if (res.status === 204) {
-          localStorage.removeItem('space')
-          setSpace(null)
-          setSpaceId('')
-          dispatch({ type: 'clear' })
-        } else {
-          throw new Error('Failed to delete space')
-        }
+    try {
+      const response = await fetch(`${API_HOST}/api/space/${spaceId}`, {
+        method: 'DELETE',
       })
-      .catch((error) => {
-        console.error('Error deleting space:', error)
-      })
+      if (!response.ok) {
+        throw new Error('Failed to delete space')
+      }
+
+      localStorage.removeItem('space')
+      setSpace(null)
+      setSpaceId('')
+      dispatch({ type: 'clear' })
+    } catch (error) {
+      console.error('Error deleting space:', error)
+    }
   }, [spaceId, setSpace, setSpaceId])
 
   return (
@@ -315,7 +336,7 @@ Continue?`,
                 <>
                   Space Connected
                   <br />
-                  {space.id}
+                  {space.name}
                 </>
               ) : (
                 'No space connected'

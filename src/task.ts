@@ -10,4 +10,5 @@ export type Task = {
 
 export type Space = {
   id: string
+  name: string
 }
