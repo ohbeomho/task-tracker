@@ -17,7 +17,7 @@ const SpinKeyframes = keyframes`
 `
 
 const SyncIconContainer = styled.div`
-  position: absolute;
+  position: fixed;
   left: 0;
   bottom: 0;
   padding: 1rem;
