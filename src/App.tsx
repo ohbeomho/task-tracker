@@ -13,14 +13,16 @@ import Checkbox from './components/Checkbox.styled.tsx'
 import type { Space, Task } from './task'
 import Menu from './components/Menu.styled.tsx'
 import MenuIcon from './components/MenuIcon.tsx'
+import { SyncIcon } from './components/SyncIcon.tsx'
 
 type TaskAction = {
   type: 'add' | 'remove' | 'mark' | 'edit' | 'clear' | 'set'
-  task?: Task
-  tasks?: Task[]
-  content?: string
-  status?: number
-  id?: number
+  payload?: any
+}
+
+type ServerTaskAction = {
+  type: 'create' | 'update' | 'delete'
+  payload?: any
 }
 
 const API_HOST = import.meta.env.VITE_API_HOST || 'http://localhost:8080'
@@ -34,23 +36,25 @@ function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
 
   switch (action.type) {
     case 'add':
-      updated = [...tasks, action.task!]
+      updated = [...tasks, action.payload.task!]
       break
     case 'remove':
-      updated = tasks.filter((task) => task !== action.task!)
+      updated = tasks.filter((task) => task !== action.payload.task!)
       break
     case 'mark':
       updated = tasks.map((task) =>
-        task === action.task! ? { ...task, status: action.status! } : task,
+        task === action.payload.task!
+          ? { ...task, status: action.payload.status! }
+          : task,
       )
       break
     case 'edit':
       updated = tasks.map((task) =>
-        task === action.task!
+        task === action.payload.task!
           ? {
               ...task,
-              content: action.content || task.content,
-              id: action.id || task.id,
+              content: action.payload.content || task.content,
+              id: action.payload.id || task.id,
             }
           : task,
       )
@@ -59,7 +63,7 @@ function tasksReducer(tasks: Task[], action: TaskAction): Task[] {
       updated = []
       break
     case 'set':
-      updated = action.tasks || []
+      updated = action.payload.tasks || []
       break
   }
 
@@ -117,6 +121,8 @@ function App() {
   const [content, setContent] = useState('')
   const [editText, setEditText] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [actions, setActions] = useState<ServerTaskAction[]>([])
+  const [isSyncing, setIsSyncing] = useState(false)
 
   const [tasks, dispatch] = useReducer(tasksReducer, [])
   const [isLoading, setIsLoading] = useState(true)
@@ -127,7 +133,7 @@ function App() {
     try {
       setIsLoading(true)
       const initialTasks = await getInitialTasks()
-      dispatch({ type: 'set', tasks: initialTasks })
+      dispatch({ type: 'set', payload: { tasks: initialTasks } })
     } catch (err) {
       if (err instanceof Error && err.name === 'SpaceError') {
         setError(err)
@@ -152,62 +158,66 @@ function App() {
     })
   }, [loadTasks])
 
+  useEffect(() => {
+    if (!actions.length) return
+
+    setIsSyncing(true)
+    const timeout = setTimeout(() => {
+      fetch(`${API_HOST}/api/task/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(actions),
+      })
+      setActions([])
+      setIsSyncing(false)
+    }, 3000)
+
+    return () => clearTimeout(timeout)
+  }, [actions, setIsSyncing, setActions])
+
   const removeTask = useCallback(
     (task: Task) => {
-      dispatch({ type: 'remove', task })
+      dispatch({ type: 'remove', payload: { task } })
 
       if (!spaceId) return
 
-      fetch(`${API_HOST}/api/task/${task.id}`, {
-        method: 'DELETE',
-      }).catch(console.error)
+      setActions((prev) => [
+        ...prev,
+        { type: 'delete', payload: { id: task.id } },
+      ])
     },
-    [spaceId],
+    [spaceId, setActions],
   )
 
   const addTask = useCallback(() => {
     if (!content) return
     const newTask: Task = { content, status: 0 }
+    const action: TaskAction = { type: 'add', payload: { task: newTask } }
+
     // Add to local state immediately for better UX
-    dispatch({ type: 'add', task: newTask })
+    dispatch(action)
     setContent('')
 
     if (!spaceId) return
 
-    // Then sync with server
-    fetch(`${API_HOST}/api/task`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newTask, spaceId }),
-    })
-      .then((res) =>
-        res.status === 201
-          ? res.json()
-          : Promise.reject(new Error('Failed to add task')),
-      )
-      .then((createdTask) =>
-        dispatch({ type: 'edit', task: newTask, id: createdTask.id }),
-      )
-      .catch((error) => {
-        console.error('Error adding task:', error)
-        dispatch({ type: 'remove', task: newTask })
-      })
-  }, [content, spaceId])
+    setActions((prev) => [
+      ...prev,
+      { type: 'create', payload: { content: newTask.content, spaceId } },
+    ])
+  }, [content, spaceId, setActions])
 
   const changeStatus = useCallback(
     (task: Task, status: number) => {
-      dispatch({ type: 'mark', task, status })
+      dispatch({ type: 'mark', payload: { task, status } })
 
       if (!spaceId) return
 
-      // Update server
-      fetch(`${API_HOST}/api/task/${task.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      }).catch(console.error)
+      setActions((prev) => [
+        ...prev,
+        { type: 'update', payload: { id: task.id, status } },
+      ])
     },
-    [spaceId],
+    [spaceId, setActions],
   )
 
   const editTask = useCallback(
@@ -216,23 +226,19 @@ function App() {
 
       dispatch({
         type: 'edit',
-        task,
-        content: editText,
+        payload: { task, content: editText },
       })
 
       if (!spaceId) return
 
-      // Update server
-      fetch(`${API_HOST}/api/task/${task.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editText }),
-      }).catch(console.error)
-
+      setActions((prev) => [
+        ...prev,
+        { type: 'update', payload: { id: task.id, content: editText } },
+      ])
       setEditText('')
       setEditingTask(null)
     },
-    [editingTask, editText, spaceId],
+    [editingTask, editText, spaceId, setActions],
   )
 
   const changeSpace = useCallback(async () => {
@@ -476,6 +482,7 @@ Continue?`,
           )}
         </TaskList>
       </main>
+      <SyncIcon isSyncing={isSyncing} />
     </div>
   )
 }
