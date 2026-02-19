@@ -6,8 +6,6 @@ const TaskList = styled.ul`
   list-style: none;
   padding: 0;
   margin: 1rem 0;
-  border-radius: 0.5rem;
-  overflow: hidden;
   box-shadow: var(--shadow);
 `
 
@@ -23,9 +21,15 @@ const TaskListItem = styled.li.attrs<{ $status?: number }>((props) => ({
   padding: 0.75rem 1rem;
   transition: all 0.2s ease;
   border-bottom: 1px solid var(--border-color);
+  filter: ${(props) => (props.$status === 1 ? 'brightness(0.8)' : 'none')};
+
+  &:first-child {
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
 
   &:last-child {
     border-bottom: none;
+    border-radius: 0 0 0.5rem 0.5rem;
   }
 
   & > div:first-child {
