@@ -108,8 +108,6 @@ async function getSpace(): Promise<Space | null> {
       return null
     }
 
-    console.log(response)
-
     const spaceData = await response.json()
     space.name = spaceData.name
   }
