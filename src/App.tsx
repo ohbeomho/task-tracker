@@ -85,6 +85,7 @@ async function fetchTasks(spaceId: string): Promise<Task[]> {
     }
     throw new Error('Failed to fetch tasks')
   }
+
   return await response.json()
 }
 
@@ -106,6 +107,8 @@ async function getSpace(): Promise<Space | null> {
       localStorage.removeItem('space')
       return null
     }
+
+    console.log(response)
 
     const spaceData = await response.json()
     space.name = spaceData.name
