@@ -18,7 +18,8 @@ const SpinKeyframes = keyframes`
 
 const SyncIconContainer = styled.div`
   position: fixed;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 0;
   padding: 1rem;
   display: flex;
@@ -26,7 +27,7 @@ const SyncIconContainer = styled.div`
   justify-content: center;
   align-items: center;
   opacity: 0;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 1s ease-in-out;
 
   &.spin {
     opacity: 1;
@@ -34,6 +35,14 @@ const SyncIconContainer = styled.div`
 
   &.spin svg {
     animation: ${SpinKeyframes} 1s linear infinite;
+  }
+
+  span {
+    position: absolute;
+    top: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
   }
 `
 
@@ -43,23 +52,46 @@ export const SyncIcon: React.FC<SyncIconProps> = ({
 }: SyncIconProps) => {
   return (
     <SyncIconContainer className={isSyncing ? 'spin' : ''}>
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 13.01 17.75 13.97 17.3 14.8L18.76 16.26C19.54 15.03 20 13.57 20 12C20 7.58 16.42 4 12 4Z"
-          fill="currentColor"
-        />
-        <path
-          d="M12 20V23L16 19L12 15V18C8.69 18 6 15.31 6 12C6 10.99 6.25 10.03 6.7 9.2L5.24 7.74C4.46 8.97 4 10.43 4 12C4 16.42 7.58 20 12 20Z"
-          fill="currentColor"
-        />
-      </svg>
-      <span>Syncing...</span>
+      {isSyncing ? (
+        <>
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 13.01 17.75 13.97 17.3 14.8L18.76 16.26C19.54 15.03 20 13.57 20 12C20 7.58 16.42 4 12 4Z"
+              fill="currentColor"
+            />
+            <path
+              d="M12 20V23L16 19L12 15V18C8.69 18 6 15.31 6 12C6 10.99 6.25 10.03 6.7 9.2L5.24 7.74C4.46 8.97 4 10.43 4 12C4 16.42 7.58 20 12 20Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>Syncing...</span>
+        </>
+      ) : (
+        <>
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 6L9 17L4 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>Sync Complete</span>
+        </>
+      )}
     </SyncIconContainer>
   )
 }

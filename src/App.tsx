@@ -162,6 +162,7 @@ function App() {
   useEffect(() => {
     if (!actions.length) return
 
+    // Sync to server after 2 seconds of no changes
     setIsSyncing(true)
     const timeout = setTimeout(() => {
       fetch(`${API_HOST}/api/task/bulk`, {
@@ -169,9 +170,14 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(actions),
       })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to sync tasks')
+        })
+        .catch((err) => console.error('Failed to sync tasks:', err))
+        .finally(() => setIsSyncing(false))
+
       setActions([])
-      setIsSyncing(false)
-    }, 3000)
+    }, 2000)
 
     return () => clearTimeout(timeout)
   }, [actions, setIsSyncing, setActions])
