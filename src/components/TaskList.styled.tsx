@@ -24,12 +24,14 @@ const TaskListItem = styled.li.attrs<{ $status?: number }>((props) => ({
   filter: ${(props) => (props.$status === 1 ? 'brightness(0.8)' : 'none')};
 
   &:first-child {
-    border-radius: 0.5rem 0.5rem 0 0;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
   }
 
   &:last-child {
     border-bottom: none;
-    border-radius: 0 0 0.5rem 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
   }
 
   & > div:first-child {
