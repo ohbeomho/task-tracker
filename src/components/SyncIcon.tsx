@@ -18,15 +18,15 @@ const SpinKeyframes = keyframes`
 
 const SyncIconContainer = styled.div`
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 0;
+  top: 0.5rem;
+  left: 0.5rem;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 1s ease-in-out;
 
   &.spin {
@@ -35,14 +35,6 @@ const SyncIconContainer = styled.div`
 
   &.spin svg {
     animation: ${SpinKeyframes} 1s linear infinite;
-  }
-
-  span {
-    position: absolute;
-    top: -0.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
   }
 `
 
@@ -70,7 +62,6 @@ export const SyncIcon: React.FC<SyncIconProps> = ({
               fill="currentColor"
             />
           </svg>
-          <span>Syncing...</span>
         </>
       ) : (
         <>
@@ -89,7 +80,6 @@ export const SyncIcon: React.FC<SyncIconProps> = ({
               strokeLinejoin="round"
             />
           </svg>
-          <span>Sync Complete</span>
         </>
       )}
     </SyncIconContainer>
